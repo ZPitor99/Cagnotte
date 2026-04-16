@@ -1,0 +1,1 @@
+from cagnotte.views import cli
