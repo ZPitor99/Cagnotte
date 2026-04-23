@@ -1,8 +1,11 @@
 # Cagnotte Project
 
-Project of application to manage a money pool (cagnotte).
+Project of application to manage a money pool (cagnotte). 
+This application can be used via terminal commands to manage the pot. 
 
-In this application the current name of a money pool is "cagnotte".
+**Upcoming feature: web interface.**
+
+In this application the current name of a money pool is "cagnotte". 
 
 ## Specifications
 
@@ -27,7 +30,6 @@ Is a `Python` project under `uv 0.10.11` with :
 - Click
 - SQLite
 - SQLAlchemy
-- 
 
 Using `dataclasses`, `datetime`, `typing` too.
 
