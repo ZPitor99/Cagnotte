@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 
 from cagnotte.data import select_expenses
+import cagnotte.data as gestion_db
+
+
+
 
 
 @dataclass
@@ -58,3 +62,34 @@ def compute_transactions(cagnotte_id: str) -> list[Transaction]:
             j += 1
 
     return transactions
+
+def cagnotte_exist(name: str) -> bool:
+    """
+    Say if the cagnotte exists or not.
+    Args:
+        name (str): The name of the cagnotte.
+
+    Returns:
+        bool: True if cagnotte exists else False.
+
+    """
+    row = gestion_db.get_cagnotte(name)
+    if not row:
+        return False
+    return True
+
+
+def is_number_float(s) -> bool:
+    """
+    Say if s can be trans type in a float
+    Args:
+        s (Any): The value to test.
+
+    Returns:
+        bool: True if s can be a float, False otherwise.
+    """
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

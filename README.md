@@ -28,15 +28,26 @@ Is a `Python` project under `uv 0.10.11` with :
 - Click
 - SQLite
 - SQLAlchemy
+- Flask and Jinja2
 
-Using `dataclasses`, `datetime`, `typing` too.
+Using `dataclasses`, `datetime`, `typing`, `uuid` too.
+Dev in `Python 3.14.4`
 
 ```bash
 cagnotte v1.0
-├── click v8.3.1
+├── click v8.3.3
 │   └── colorama v0.4.6
-└── sqlalchemy v2.0.48
-    ├── greenlet v3.3.2
+├── flask v3.1.3
+│   ├── blinker v1.9.0
+│   ├── click v8.3.3 (*)
+│   ├── itsdangerous v2.2.0
+│   ├── jinja2 v3.1.6
+│   │   └── markupsafe v3.0.3
+│   ├── markupsafe v3.0.3
+│   └── werkzeug v3.1.8
+│       └── markupsafe v3.0.3
+└── sqlalchemy v2.0.49
+    ├── greenlet v3.4.0
     └── typing-extensions v4.15.0
 ```
 

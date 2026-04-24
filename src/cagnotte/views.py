@@ -1,15 +1,10 @@
 import click
 import uuid
 
-from flask import Flask
-from flask import flash
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
+from flask import Flask, flash, redirect, render_template, request, url_for
 
 import cagnotte.data as gestion_db
-from cagnotte.domain import compute_transactions
+from cagnotte.domain import compute_transactions, cagnotte_exist, is_number_float
 
 
 @click.group()
@@ -19,7 +14,6 @@ def cli():
 
 # Color msg
 def echo_err(msg):   click.echo(click.style(msg, fg="red"))
-
 
 def echo_info(msg):  click.echo(click.style(msg, fg="cyan"))
 
@@ -86,37 +80,6 @@ def show_expenses(name: str):
 
 # -----------------------------------------------------------------------------------------------------------------------
 
-def cagnotte_exist(name: str) -> bool:
-    """
-    Say if the cagnotte exists or not.
-    Args:
-        name (str): The name of the cagnotte.
-
-    Returns:
-        bool: True if cagnotte exists else False.
-
-    """
-    row = gestion_db.get_cagnotte(name)
-    if not row:
-        return False
-    return True
-
-
-def est_nombre(s) -> bool:
-    """
-    Say if s can be trans type in a float
-    Args:
-        s (Any): The value to test.
-
-    Returns:
-        bool: True if s can be a float, False otherwise.
-    """
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
 
 @cli.command()
 @click.option("-n", "--name", prompt="Name of cagnotte", help="The name of the cagnotte.")
@@ -126,7 +89,7 @@ def add_expense(name: str, person: str, amount: float):
     """
     Add an expense to the cagnotte.
     """
-    if est_nombre(amount):
+    if is_number_float(amount):
         amount = round(float(amount), 2)
     else:
         echo_err(f"The amount {amount} need to be a number.")
@@ -246,7 +209,7 @@ def perform_action_expenses():
     if action == "add_expense":
         if not name or not person:
             flash("Cagnotte and person are required.", "error")
-        elif not est_nombre(amount_raw):
+        elif not is_number_float(amount_raw):
             flash(f"The amount {amount_raw} need to be a number.", "error")
         else:
             amount = round(float(amount_raw), 2)
