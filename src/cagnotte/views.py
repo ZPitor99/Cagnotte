@@ -1,4 +1,12 @@
 import click
+import uuid
+
+from flask import Flask
+from flask import flash
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
 
 import cagnotte.data as gestion_db
 from cagnotte.domain import compute_transactions
@@ -8,8 +16,11 @@ from cagnotte.domain import compute_transactions
 def cli():
     gestion_db.init_db()
 
-#Color msg
+
+# Color msg
 def echo_err(msg):   click.echo(click.style(msg, fg="red"))
+
+
 def echo_info(msg):  click.echo(click.style(msg, fg="cyan"))
 
 
@@ -75,7 +86,7 @@ def show_expenses(name: str):
 
 # -----------------------------------------------------------------------------------------------------------------------
 
-def cagnotte_exist(name: str)->bool:
+def cagnotte_exist(name: str) -> bool:
     """
     Say if the cagnotte exists or not.
     Args:
@@ -91,7 +102,7 @@ def cagnotte_exist(name: str)->bool:
     return True
 
 
-def est_nombre(s)->bool:
+def est_nombre(s) -> bool:
     """
     Say if s can be trans type in a float
     Args:
@@ -116,7 +127,7 @@ def add_expense(name: str, person: str, amount: float):
     Add an expense to the cagnotte.
     """
     if est_nombre(amount):
-        amount = round(float(amount),2)
+        amount = round(float(amount), 2)
     else:
         echo_err(f"The amount {amount} need to be a number.")
 
@@ -169,7 +180,7 @@ def solde(name: str, ):
         echo_info(f"The {len(data)} Expenses in {name}")
         for item in data:
             click.echo(f"{i} - "
-                       f"{item[3].strftime("%Y-%m-%d %H:%M:%S")} | "
+                       f"{item[3].strftime('%Y-%m-%d %H:%M:%S')} | "
                        f"{item[2]}€ - "
                        f"{item[1]}")
             i += 1
@@ -181,3 +192,151 @@ def solde(name: str, ):
             echo_info(f"\nThe {len(transaction)} transactions")
             for elem in transaction:
                 click.echo(f"{elem.presentation()}")
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = uuid.uuid4().hex
+
+
+@app.route("/")
+def home():
+    """
+    Function to render the home page.
+    Returns:
+        render_template : Show the template with data.
+    """
+    gestion_db.init_db()
+    selected_name = (request.args.get("name") or "").strip()
+    action = (request.args.get("action") or "").strip()
+
+    cagnottes = [item[0] for item in gestion_db.select_all_cagnottes()]
+
+    expenses = []
+    transactions = []
+    raw_expenses = []
+    if selected_name and cagnotte_exist(selected_name):
+        expenses = gestion_db.select_one_cagnotte(selected_name)
+        raw_expenses = gestion_db.select_expenses(selected_name)
+        if action == "solde" and raw_expenses:
+            transactions = compute_transactions(selected_name)
+
+    return render_template(
+        "home.html",
+        cagnottes=cagnottes,
+        selected_name=selected_name,
+        expenses=expenses,
+        transactions=transactions,
+        raw_expenses=raw_expenses,
+    )
+
+
+@app.post("/action_expenses")
+def perform_action_expenses():
+    """
+    Resolve action about expenses.
+    Returns:
+        redirect to the home page.
+    """
+    gestion_db.init_db()
+    action = (request.form.get("action") or "").strip()
+    name = (request.form.get("name") or "").strip()
+    person = (request.form.get("person") or "").strip()
+    amount_raw = (request.form.get("amount") or "").strip()
+
+    if action == "add_expense":
+        if not name or not person:
+            flash("Cagnotte and person are required.", "error")
+        elif not est_nombre(amount_raw):
+            flash(f"The amount {amount_raw} need to be a number.", "error")
+        else:
+            amount = round(float(amount_raw), 2)
+            if amount <= 0:
+                flash(f"The amount {amount} cannot be less than zero.", "error")
+            elif not cagnotte_exist(name):
+                flash(f"The cagnotte {name} does not exist.", "error")
+            else:
+                try:
+                    gestion_db.add_expense(
+                        par_id_cagnotte=name,
+                        par_person=person,
+                        par_expense=amount,
+                    )
+                    flash(f"Expense of {amount}€ added for {person} in {name}.", "success")
+                except Exception:
+                    flash(f"Maybe the {person}'s expense for {name} already exists.", "error")
+    elif action == "del_expense":
+        if not name or not person:
+            flash("Cagnotte and person are required.", "error")
+        elif not cagnotte_exist(name):
+            flash(f"The cagnotte {name} does not exist.", "error")
+        else:
+            did = gestion_db.del_expense(par_id_cagnotte=name, par_person=person)
+            if did:
+                flash(f"Expense of {person} deleted in {name}.", "success")
+            else:
+                flash(f"Maybe the {person}'s expense for {name} does not exists.", "error")
+    else:
+        flash("Unknown action.", "error")
+
+    params = {}
+    if name:
+        params["name"] = name
+    return redirect(url_for("home", **params))
+
+
+@app.post("/action_cagnotte")
+def perform_action_cagnotte():
+    """
+    Resolve action about cagnottes.
+    Returns:
+        redirect to the home page.
+    """
+    gestion_db.init_db()
+    action = (request.form.get("action") or "").strip()
+    name = (request.form.get("name") or "").strip()
+
+    if action == "create_cagnotte":
+        if not name:
+            flash("Name of cagnotte is required.", "error")
+        else:
+            try:
+                gestion_db.add_cagnottes(par_name=name)
+                flash(f"Cagnotte {name} created.", "success")
+            except Exception:
+                flash(f"An error occured while creating cagnotte {name}.", "error")
+    elif action == "delete_cagnotte":
+        if not name:
+            flash("Name of cagnotte is required.", "error")
+        else:
+            did = gestion_db.del_cagnottes(par_name=name)
+            if did:
+                flash(f"Cagnotte {name} deleted.", "success")
+            else:
+                flash("The cagnotte does not exist.", "error")
+    elif action == "show_expenses":
+        if not name:
+            flash("Name of cagnotte is required.", "error")
+        elif not cagnotte_exist(name):
+            flash(f"The cagnotte {name} does not exist.", "error")
+        elif len(gestion_db.select_one_cagnotte(name)) == 0:
+            flash(f"No expenses for {name}.", "info")
+        else:
+            flash(f"Showing expenses for {name}.", "info")
+    elif action == "solde":
+        if not name:
+            flash("Name of cagnotte is required.", "error")
+        elif not cagnotte_exist(name):
+            flash(f"The cagnotte {name} does not exist.", "error")
+        elif len(gestion_db.select_one_cagnotte(name)) == 0:
+            flash(f"The cagnotte {name} is empty.", "info")
+        else:
+            flash(f"Showing transactions for {name}.", "info")
+    else:
+        flash("Unknown action.", "error")
+
+    params = {}
+    if name:
+        params["name"] = name
+    if action == "solde":
+        params["action"] = "solde"
+    return redirect(url_for("home", **params))

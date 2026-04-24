@@ -1,9 +1,7 @@
 # Cagnotte Project
 
 Project of application to manage a money pool (cagnotte). 
-This application can be used via terminal commands to manage the pot. 
-
-**Upcoming feature: web interface.**
+This application can be used via terminal or via a web view commands to manage the pot. 
 
 In this application the current name of a money pool is "cagnotte". 
 
@@ -34,7 +32,7 @@ Is a `Python` project under `uv 0.10.11` with :
 Using `dataclasses`, `datetime`, `typing` too.
 
 ```bash
-cagnotte v0.1
+cagnotte v1.0
 ├── click v8.3.1
 │   └── colorama v0.4.6
 └── sqlalchemy v2.0.48
@@ -54,12 +52,13 @@ cagnotte v0.1
         ├── data.py
         ├── domain.py
         ├── templates
-        │   └── files.html #For Flask (next version)
+        │   └── home.html
         └── views.py
 ```
 
 ## Python package and project manager
 
+Run commande line (terminal part):
 ```bash
 $ uv sync           # install project dependencies
 $ uv run cagnotte   # run the project
@@ -78,6 +77,15 @@ Commands:
   show-cagnottes   Show the list of cagnottes available.
   show-expenses    Show the details of a cagnotte expenses.
   solde            Compute and show the "who have to send to who"
+```
+
+Run development server (web part) :
+```bash
+$ uv sync           # install project dependencies
+$ uv run cagnotte   # run the project
+$ uv build          # build the projet
+
+uv run flask --app cagnotte.views run
 ```
 
 ## Links

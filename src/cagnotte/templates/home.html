@@ -1,1 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cagnotte</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem auto;
+            max-width: 900px;
+            line-height: 1.4;
+        }
 
+        h1 {
+            margin-bottom: .25rem;
+        }
+
+        .muted {
+            color: #555;
+            margin-top: 0;
+        }
+
+        .box {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+        }
+
+        .box_in {
+            padding: 1rem;
+            display: flex;
+            flex-direction: row;
+        }
+
+        form {
+            display: grid;
+            gap: .5rem;
+        }
+
+        .row {
+            display: grid;
+            gap: .5rem;
+        }
+
+        .div_bnt {
+            padding: 10px;
+        }
+
+        input {
+            padding: .45rem .55rem;
+            font: inherit;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+        }
+
+        ul {
+            margin-top: .5rem;
+        }
+
+        .messages {
+            list-style: none;
+            margin: 10px;
+        }
+
+        .messages li {
+            padding: .5rem .6rem;
+            margin-bottom: .4rem;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #ecfdf3;
+            border: 1px solid #bbf7d0;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+    </style>
+</head>
+
+<body>
+<h1>Cagnotte</h1>
+<p class="muted">Minimal Flask interface for the same actions as CLI commands.</p>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<ul class="messages">
+    {% for category, message in messages %}
+    <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
+<section class="box">
+    <h2>All cagnottes</h2>
+    {% if cagnottes %}
+    <ul>
+        {% for item in cagnottes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No cagnottes.</p>
+    {% endif %}
+</section>
+
+<section class="box">
+    <h2>Actions</h2>
+    <div class="box_in">
+
+        <form method="post" action="{{ url_for('perform_action_cagnotte') }}">
+            <div class="row">
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" placeholder="My travel" value="{{ selected_name }}">
+            </div>
+            <div class="div_bnt">
+                <button type="submit" name="action" value="create_cagnotte">Create cagnotte</button>
+                <button type="submit" name="action" value="delete_cagnotte">Delete cagnotte</button>
+            </div>
+            <div class="div_bnt">
+                <button type="submit" name="action" value="show_expenses">Show expenses</button>
+                <button type="submit" name="action" value="solde">Compute solde</button>
+            </div>
+        </form>
+        <hr>
+
+        <form method="post" action="{{ url_for('perform_action_expenses') }}">
+            <div class="row">
+                <label for="pot_name">Name</label>
+                <input type="text" name="name" id="pot_name" placeholder="My travel" value="{{ selected_name }}">
+                <label for="person">Person</label>
+                <input type="text" name="person" id="person" placeholder="Raymond">
+                <label for="amount">Amount</label>
+                <input type="text" name="amount" id="amount" placeholder="50">
+            </div>
+            <div class="div_bnt">
+                <button type="submit" name="action" value="add_expense">Add expense</button>
+                <button type="submit" name="action" value="del_expense">Delete expense</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="box">
+    <h2>Selected cagnotte</h2>
+    {% if selected_name %}
+    <p><strong>{{ selected_name }}</strong></p>
+    {% else %}
+    <p>No cagnotte selected.</p>
+    {% endif %}
+
+    {% if expenses %}
+    <h3>Expenses</h3>
+    <ul>
+        {% for item in expenses %}
+        <li>{{ item.presentation() }}</li>
+        {% endfor %}
+    </ul>
+    {% elif selected_name %}
+    <p>No expenses.</p>
+    {% endif %}
+
+    {% if transactions %}
+    <h3>Transactions</h3>
+    <ul>
+        {% for item in transactions %}
+        <li>{{ item.presentation() }}</li>
+        {% endfor %}
+    </ul>
+    {% elif selected_name and raw_expenses %}
+    <p>Use "Compute solde" to show transactions.</p>
+    {% endif %}
+</section>
+</body>
+</html>
